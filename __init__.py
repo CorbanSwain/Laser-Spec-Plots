@@ -33,7 +33,7 @@ def gen_info_plot(x, y, wavelength, power):
     lower_lim = wavelength - window_size / 2
 
     fig = plt.figure(figsize=(7, 4))
-    ax = fig.add_subplot(position=(0.03, 0.1, 0.57, 0.85))
+    ax = fig.add_subplot(position=(0.03, 0.18, 0.57, 0.77))
     ax.plot(x, y_norm, lw=2.5, color='C3')
     ax.set_ylim([-0.02, 1.02])
     ax_lw = 1.5
@@ -45,6 +45,7 @@ def gen_info_plot(x, y, wavelength, power):
     ax.set_xticks(np.arange(650, 1100, 10))
     ax.set_xticks(np.arange(650, 110, 2), minor=True)
     ax.set_xlim([lower_lim, upper_lim])
+    ax.set_xlabel('$\lambda_{measured}$, nm')
     ax.minorticks_on()
     ax.grid(True, 'major', 'x', lw=ax_lw)
     ax.grid(True, 'minor', 'x', lw=ax_lw / 2, ls=':')
@@ -53,7 +54,7 @@ def gen_info_plot(x, y, wavelength, power):
                    direction='out',
                    width=ax_lw,
                    length=8)
-    ax.annotate('', (peak_wavelength, 1.02), (peak_wavelength, 1.02 + 1e-3),
+    ax.annotate('', (peak_wavelength, 1.03), (peak_wavelength, 1.03 + 1e-3),
                 arrowprops=dict(headwidth=7,
                                 headlength=4,
                                 lw=ax_lw,
@@ -123,31 +124,33 @@ def main():
                             wavelength=spectra_y_names[i],
                             power=power_dict[spectra_y_names[i]]))
 
-    fig = plt.figure(num=0, figsize=(7, 4))
+    fig = plt.figure(num=1, figsize=(7, 4))
 
     results = [gen_info_plot(**b) for b in batches]
     peak_deltas, _peak_widths = tuple(np.array(x) for x in zip(*results))
 
 
     gs = GridSpec(3, 1, figure=fig,
-                  bottom=0.15,
+                  bottom=0.17,
                   top=0.965,
                   right=0.95,
                   left=0.1,
                   hspace=0.26)
 
     ax1 = fig.add_subplot(gs[0])
-    ax1.plot(spectra_y_names, peak_deltas, color='black', lw=1.5)
+    ax1.plot(spectra_y_names, peak_deltas, color='black', lw=1.5, marker='.',
+             clip_on=False)
     ax1.fill_between(spectra_y_names, peak_deltas, 0, where=peak_deltas >= 0,
                      fc='C0', interpolate=True, alpha=0.7)
     ax1.fill_between(spectra_y_names, peak_deltas, 0, where=peak_deltas <= 0,
                      fc='C3', interpolate=True, alpha=0.7)
     ax1.set_yticks([-10, 0])
     ax1.set_ylim([-12, 2])
-    ax1.set_ylabel(r'$\Delta\lambda$, nm')
+    ax1.set_ylabel(r'$\Delta\lambda_{peak}$, nm')
 
     ax2 = fig.add_subplot(gs[1])
-    ax2.plot(spectra_y_names, _peak_widths, color='black', lw=1.5)
+    ax2.plot(spectra_y_names, _peak_widths, color='black', lw=1.5, marker='.',
+             clip_on=False)
     ax2.fill_between(spectra_y_names, _peak_widths, 0, where=_peak_widths >= 0,
                      fc='black', interpolate=True, alpha=0.2)
     ax2.set_yticks([0, 6, 12])
@@ -155,12 +158,15 @@ def main():
     ax2.set_ylabel('FWHM, nm')
 
     ax3 = fig.add_subplot(gs[2])
-    ax3.plot(power_x, power / 1000, color='black', lw=1.5)
+    ax3.plot(power_x, power / 1000, color='black', lw=1.5, marker='.')
+    ax3.plot(power_x[-1], power[-1] / 1000, color='black', lw=1.5, marker='.',
+             clip_on=False)
     ax3.fill_between(power_x, power / 1000, 0, where=power >= 0,
                      fc='black', interpolate=True, alpha=0.2)
     ax3.set_yticks([0, 0.8, 1.6])
-    ax3.set_ylim([0, 1.6])
-    ax3.set_xlabel('Expected $\lambda$, nm')
+    ax3.set_ylim([8e-2, 2])
+    ax3.set_yscale('log')
+    ax3.set_xlabel('Expected $\lambda_{peak}$, nm')
     ax3.set_ylabel('Max Power, W')
     ax_lw = 1
 
@@ -187,8 +193,13 @@ def main():
 
     fig.align_ylabels(axs)
 
-    csutils.save_figures('201028_mai_tia_laser_measurements_cswain',
-                         add_timestamp=False)
+    csutils.save_figures(
+        '201028_mai_tia_laser_measurements_cswain',
+        add_filename_timestamp=False,
+        stamp_kwargs=dict(stamp_str='MaiTai Measurements from 20.10.28 | Fig. '
+                                    '#%n | Generated on %d by Corban S.',
+                          fontfamily='Input',
+                          fontstyle='italic'))
 
     plt.show()
 
